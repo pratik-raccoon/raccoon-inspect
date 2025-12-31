@@ -1,0 +1,23 @@
+{
+  "name": "babel-plugin-jsx-component-source",
+  "version": "1.0.0",
+  "description": "Babel plugin to inject source metadata into JSX components for debugging and inspection",
+  "main": "index.js",
+  "keywords": [
+    "babel-plugin",
+    "jsx",
+    "react",
+    "source-maps",
+    "debugging"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/parser": "^7.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pratik-raccooon/babel-plugin-jsx-component-source.git"
+  }
+}
