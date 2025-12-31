@@ -28,10 +28,10 @@ module.exports = function ({ types: t }) {
             const hasRuntimeImport = path.node.body.some(node => {
               if (t.isImportDeclaration(node)) {
                 const sourceValue = node.source.value;
-                return sourceValue === 'babel-plugin-jsx-component-source/runtime' ||
+                return sourceValue === 'raccoon-inspect/runtime' ||
                        sourceValue === './runtime' ||
                        sourceValue === '../runtime' ||
-                       sourceValue.includes('babel-plugin-jsx-component-source/runtime');
+                       sourceValue.includes('raccoon-inspect/runtime');
               }
               return false;
             });
@@ -40,7 +40,7 @@ module.exports = function ({ types: t }) {
               // Inject the runtime import at the top of the file (after other imports)
               const runtimeImport = t.importDeclaration(
                 [],
-                t.stringLiteral('babel-plugin-jsx-component-source/runtime')
+                t.stringLiteral('raccoon-inspect/runtime')
               );
               
               // Find the last import statement to insert after it

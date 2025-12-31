@@ -2,7 +2,7 @@
 // This file is imported by the Babel plugin and runs only in the browser
 
 if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
-    console.log('[babel-plugin-jsx-component-source] Runtime module loaded');
+    console.log('[raccoon-inspect] Runtime module loaded');
   window.__sourceSelectorInitialized = true;
   
   let isActive = false;

@@ -1,5 +1,5 @@
 {
-  "name": "babel-plugin-jsx-component-source",
+  "name": "raccoon-inspect",
   "version": "1.0.0",
   "description": "Babel plugin to inject source metadata into JSX components for debugging and inspection",
   "main": "index.js",
@@ -18,6 +18,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pratik-raccooon/babel-plugin-jsx-component-source.git"
+    "url": "https://github.com/pratik-raccooon/raccoon-inspect.git"
   }
 }
