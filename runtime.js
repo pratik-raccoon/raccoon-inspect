@@ -1,8 +1,5 @@
-// Client-side runtime for source selector
-// This file is imported by the Babel plugin and runs only in the browser
-
 if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
-    console.log('[raccoon-inspect] Runtime module loaded');
+  console.log('[raccoon-inspect] Runtime module loaded');
   window.__sourceSelectorInitialized = true;
   
   let isActive = false;
@@ -11,100 +8,74 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
   let overlayHighlight = null;
   
   function elementToString(element) {
-    var tagName = element.tagName.toLowerCase();
-    var attrs = [];
+    const tagName = element.tagName.toLowerCase();
+    const attrs = [];
     
     if (element.attributes && element.attributes.length > 0) {
-      for (var i = 0; i < element.attributes.length; i++) {
-        var attr = element.attributes[i];
-        var name = attr.name;
-        var value = attr.value;
-        var escapedValue = value.replace(/"/g, '&quot;');
-        attrs.push(name + '="' + escapedValue + '"');
+      for (let i = 0; i < element.attributes.length; i++) {
+        const attr = element.attributes[i];
+        const escapedValue = attr.value.replace(/"/g, '&quot;');
+        attrs.push(`${attr.name}="${escapedValue}"`);
       }
     }
     
-    var attrString = attrs.length > 0 ? ' ' + attrs.join(' ') : '';
-    return '<' + tagName + attrString + '>';
-  }
-  
-  function loadHtmlToImage() {
-    return new Promise(function(resolve, reject) {
-      if (window.htmlToImage) {
-        resolve(window.htmlToImage);
-        return;
-      }
-      if (window.__htmlToImageLoading) {
-        window.__htmlToImageLoading.then(resolve).catch(reject);
-        return;
-      }
-      window.__htmlToImageLoading = new Promise(function(loadResolve, loadReject) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
-        script.onload = function() {
-          if (window.htmlToImage) {
-            loadResolve(window.htmlToImage);
-          } else {
-            loadReject(new Error('html-to-image failed to load'));
-          }
-        };
-        script.onerror = function() {
-          loadReject(new Error('Failed to load html-to-image'));
-        };
-        document.head.appendChild(script);
-      });
-      window.__htmlToImageLoading.then(resolve).catch(reject);
-    });
+    const attrString = attrs.length > 0 ? ' ' + attrs.join(' ') : '';
+    return `<${tagName}${attrString}>`;
   }
   
   function findTaggedElement(startElement) {
     let target = startElement;
     let attempts = 0;
+    
     while (target && attempts < 10) {
-      const component = target.getAttribute && target.getAttribute('data-source-component');
-      const file = target.getAttribute && target.getAttribute('data-source-file');
-      const line = target.getAttribute && target.getAttribute('data-source-line');
+      const component = target.getAttribute?.('data-source-component');
+      const file = target.getAttribute?.('data-source-file');
+      const line = target.getAttribute?.('data-source-line');
+      
       if (component || file || line) {
         return { target, component, file, line };
       }
+      
       target = target.parentElement;
       attempts++;
     }
+    
     return null;
   }
   
   function postSelectionMessage(payload) {
-    const messageData = {
-      type: 'SOURCE_SELECTED',
-      data: payload
-    };
     if (window.parent && window.parent !== window) {
       try {
-        window.parent.postMessage(messageData, '*');
+        window.parent.postMessage({
+          type: 'SOURCE_SELECTED',
+          data: payload
+        }, '*');
       } catch (err) {
-        // Silently fail cross-origin errors
+        console.warn('[raccoon-inspect] Failed to post message:', err);
       }
     }
   }
   
   function setHighlight(target) {
     if (!overlayHighlight) return;
+    
     if (!target) {
       overlayHighlight.style.display = 'none';
       return;
     }
+    
     const rect = target.getBoundingClientRect();
     overlayHighlight.style.display = 'block';
-    overlayHighlight.style.left = rect.left + 'px';
-    overlayHighlight.style.top = rect.top + 'px';
-    overlayHighlight.style.width = rect.width + 'px';
-    overlayHighlight.style.height = rect.height + 'px';
+    overlayHighlight.style.left = `${rect.left}px`;
+    overlayHighlight.style.top = `${rect.top}px`;
+    overlayHighlight.style.width = `${rect.width}px`;
+    overlayHighlight.style.height = `${rect.height}px`;
   }
   
   function getUnderlyingElement(x, y) {
-    const prevBlockerPointer = overlayBlocker ? overlayBlocker.style.pointerEvents : null;
-    const prevBlockerVisibility = overlayBlocker ? overlayBlocker.style.visibility : null;
-    const prevHighlightVisibility = overlayHighlight ? overlayHighlight.style.visibility : null;
+    const prevBlockerPointer = overlayBlocker?.style.pointerEvents;
+    const prevBlockerVisibility = overlayBlocker?.style.visibility;
+    const prevHighlightVisibility = overlayHighlight?.style.visibility;
     
     if (overlayBlocker) {
       overlayBlocker.style.pointerEvents = 'none';
@@ -129,12 +100,14 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
   
   function handlePointerMove(event) {
     if (!isActive) return;
+    
     const underlying = getUnderlyingElement(event.clientX, event.clientY);
     if (!underlying || underlying === overlayBlocker || underlying === overlayHighlight) {
       hoveredElement = null;
       setHighlight(null);
       return;
     }
+    
     if (hoveredElement !== underlying) {
       hoveredElement = underlying;
       setHighlight(hoveredElement);
@@ -143,44 +116,25 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
   
   function handleOverlayClick(event) {
     if (!isActive) return;
+    
     event.preventDefault();
     event.stopPropagation();
-    if (event.stopImmediatePropagation) {
-      event.stopImmediatePropagation();
-    }
+    event.stopImmediatePropagation?.();
     
     const underlying = getUnderlyingElement(event.clientX, event.clientY);
     const tagged = underlying ? findTaggedElement(underlying) : null;
-    if (!tagged) {
-      return;
+    
+    if (tagged) {
+      postSelectionMessage({
+        component: tagged.component || 'unknown',
+        file: tagged.file || 'unknown',
+        line: tagged.line || 'unknown',
+        element: elementToString(tagged.target)
+      });
     }
     
-    loadHtmlToImage().then(function(htmlToImage) {
-      return htmlToImage.toPng(tagged.target, {
-        cacheBust: true,
-        pixelRatio: 1
-      });
-    }).then(function(dataUrl) {
-      postSelectionMessage({
-        component: tagged.component || 'unknown',
-        file: tagged.file || 'unknown',
-        line: tagged.line || 'unknown',
-        screenshot: dataUrl,
-        element: elementToString(tagged.target)
-      });
-    }).catch(function(err) {
-      postSelectionMessage({
-        component: tagged.component || 'unknown',
-        file: tagged.file || 'unknown',
-        line: tagged.line || 'unknown',
-        screenshot: null,
-        error: err.message || 'Unknown error',
-        element: elementToString(tagged.target)
-      });
-    }).finally(function() {
-      isActive = false;
-      cleanupOverlays();
-    });
+    isActive = false;
+    cleanupOverlays();
   }
   
   function createOverlays() {
@@ -190,7 +144,7 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
     overlayBlocker.style.position = 'fixed';
     overlayBlocker.style.inset = '0';
     overlayBlocker.style.zIndex = '2147483646';
-    overlayBlocker.style.background = 'rgba(0,0,0,0)';
+    overlayBlocker.style.background = 'transparent';
     overlayBlocker.style.cursor = 'crosshair';
     overlayBlocker.style.userSelect = 'none';
     overlayBlocker.style.pointerEvents = 'auto';
@@ -212,18 +166,16 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
   
   function cleanupOverlays() {
     hoveredElement = null;
+    
     if (overlayBlocker) {
       overlayBlocker.removeEventListener('mousemove', handlePointerMove, true);
       overlayBlocker.removeEventListener('click', handleOverlayClick, true);
-      if (overlayBlocker.parentNode) {
-        overlayBlocker.parentNode.removeChild(overlayBlocker);
-      }
+      overlayBlocker.parentNode?.removeChild(overlayBlocker);
       overlayBlocker = null;
     }
+    
     if (overlayHighlight) {
-      if (overlayHighlight.parentNode) {
-        overlayHighlight.parentNode.removeChild(overlayHighlight);
-      }
+      overlayHighlight.parentNode?.removeChild(overlayHighlight);
       overlayHighlight = null;
     }
   }
@@ -231,18 +183,17 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
   function initSelector() {
     window.__sourceSelectorReady = true;
     
-    window.addEventListener('message', function(event) {
-      if (event.data && event.data.type === 'ENABLE_SOURCE_SELECTOR') {
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'ENABLE_SOURCE_SELECTOR') {
         isActive = true;
         createOverlays();
-      } else if (event.data && event.data.type === 'DISABLE_SOURCE_SELECTOR') {
+      } else if (event.data?.type === 'DISABLE_SOURCE_SELECTOR') {
         isActive = false;
         cleanupOverlays();
       }
     });
   }
   
-  // Initialize after DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSelector);
   } else {
