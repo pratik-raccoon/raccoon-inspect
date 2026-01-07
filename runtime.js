@@ -392,6 +392,18 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
     }
   }
   
+  function notifyParentReady() {
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          type: 'RACCOON_INSPECT_READY'
+        }, '*');
+      } catch (err) {
+        console.warn('[raccoon-inspect] Failed to notify parent of ready state:', err);
+      }
+    }
+  }
+  
   function initSelector() {
     window.__sourceSelectorReady = true;
     
@@ -406,8 +418,13 @@ if (typeof window !== 'undefined' && !window.__sourceSelectorInitialized) {
         isToolbarOpen = false;
         selectedTaggedElement = null;
         cleanupOverlays();
+      } else if (event.data?.type === 'REQUEST_RACCOON_INSPECT_STATUS') {
+        notifyParentReady();
       }
     });
+    
+    // Notify parent that runtime is ready
+    notifyParentReady();
   }
   
   if (document.readyState === 'loading') {
